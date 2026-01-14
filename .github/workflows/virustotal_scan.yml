@@ -2,8 +2,8 @@ name: VirusTotal Scan
 
 on:
   release:
-    types: [published, edited, prereleased] # Added prereleased for safety
-  workflow_dispatch: # Allows you to run this manually
+    types: [published, edited, prereleased]
+  workflow_dispatch: # Manual trigger
 
 jobs:
   scan:
@@ -16,8 +16,7 @@ jobs:
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
           update_release_body: true
-          # Note: The action will automatically find files in the release 
-          # that triggered the workflow.
+          # Using specific glob patterns to find your assets
           files: |
-            *.apk
-            *.exe
+            **/*.apk
+            **/*.exe
