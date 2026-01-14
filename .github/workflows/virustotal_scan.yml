@@ -8,10 +8,8 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    # --- THIS PART IS CRITICAL ---
     permissions:
-      contents: write  # Allows the action to edit the release description
-    # -----------------------------
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -24,18 +22,24 @@ jobs:
           if [ -z "$TAG" ]; then
             TAG=$(gh release list --limit 1 | awk -F '\t' '{print $3}')
           fi
+          # Download everything
           gh release download "$TAG" --pattern "*.apk" --pattern "*.exe" --clobber
           
-          # Optional: Delete the 158MB file so the scan doesn't fail/hang
-          # rm app-universal-debug.apk 
+          # CRITICAL FIX for 409 Error: 
+          # Remove the 158MB file. Large files often trigger 409 conflicts 
+          # because they take too long to hash/upload on free accounts.
+          rm -f app-universal-debug.apk
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }} # Needed to find the release to update
-          update_release_body: true # Appends the table to your release
-          request_rate: 4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          update_release_body: true
+          # Increase request_rate to 60 (seconds) to be very safe with the Free API
+          request_rate: 60 
           files: |
-            *.apk
-            *.exe
+            app-arm64-v8a-debug.apk
+            app-armeabi-v7a-debug.apk
+            app-x86_64-debug.apk
+            SlaVid.Windows.Setup.*.exe
