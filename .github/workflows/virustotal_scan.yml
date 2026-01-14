@@ -2,20 +2,22 @@ name: VirusTotal Scan
 
 on:
   release:
-    types: [published, edited, prereleased]
-workflow_dispatch:    
+    types: [published, edited, prereleased] # Added prereleased for safety
+  workflow_dispatch: # Allows you to run this manually
 
 jobs:
   scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: write 
+      contents: write
     steps:
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
           update_release_body: true
+          # Note: The action will automatically find files in the release 
+          # that triggered the workflow.
           files: |
             *.apk
             *.exe
