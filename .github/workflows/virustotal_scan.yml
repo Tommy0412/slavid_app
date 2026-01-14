@@ -11,20 +11,29 @@ jobs:
     permissions:
       contents: write
     steps:
-      # 1. Download the files from the release to the runner's disk
+      # 1. Initialize the repository environment
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Download the files from the release
       - name: Download Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download ${{ github.event.release.tag_name }} --pattern "*.apk" --pattern "*.exe"
+          # If triggered manually, tag_name might be empty, so we fetch the latest
+          TAG="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --json tagName --template '{{.tagName}}')
+          fi
+          gh release download "$TAG" --pattern "*.apk" --pattern "*.exe"
 
-      # 2. Scan the downloaded files
+      # 3. Scan the downloaded files
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
           update_release_body: true
-          request_rate: 4 # Stay under the 4-file-per-minute free limit
+          request_rate: 4
           files: |
             *.apk
             *.exe
