@@ -9,17 +9,22 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to edit the release description
+      contents: write
     steps:
+      # 1. Download the files from the release to the runner's disk
+      - name: Download Release Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download ${{ github.event.release.tag_name }} --pattern "*.apk" --pattern "*.exe"
+
+      # 2. Scan the downloaded files
       - name: VirusTotal Scan
-        uses: cssnr/virustotal-action@v1
+        uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # This action automatically finds release assets if triggered by a release
-          # We specify the patterns to scan only your apps
-          file_globs: |
+          update_release_body: true
+          request_rate: 4 # Stay under the 4-file-per-minute free limit
+          files: |
             *.apk
             *.exe
-          rate_limit: 4 # Important for Free VT accounts
-          update_release: true
