@@ -8,8 +8,10 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    # --- THIS PART IS CRITICAL ---
     permissions:
-      contents: write
+      contents: write  # Allows the action to edit the release description
+    # -----------------------------
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -18,25 +20,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. Determine the tag (Event tag OR Latest tag)
           TAG="${{ github.event.release.tag_name }}"
-          
           if [ -z "$TAG" ]; then
-            echo "Manual trigger detected. Finding latest release tag..."
             TAG=$(gh release list --limit 1 | awk -F '\t' '{print $3}')
           fi
-          
-          echo "Targeting release: $TAG"
-
-          # 2. Download the files
-          # Using --clobber ensures it doesn't fail if files exist
           gh release download "$TAG" --pattern "*.apk" --pattern "*.exe" --clobber
+          
+          # Optional: Delete the 158MB file so the scan doesn't fail/hang
+          # rm app-universal-debug.apk 
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          update_release_body: true
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Needed to find the release to update
+          update_release_body: true # Appends the table to your release
           request_rate: 4
           files: |
             *.apk
