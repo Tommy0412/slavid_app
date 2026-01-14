@@ -11,23 +11,27 @@ jobs:
     permissions:
       contents: write
     steps:
-      # 1. Initialize the repository environment
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Download the files from the release
       - name: Download Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # If triggered manually, tag_name might be empty, so we fetch the latest
+          # 1. Determine the tag (Event tag OR Latest tag)
           TAG="${{ github.event.release.tag_name }}"
+          
           if [ -z "$TAG" ]; then
-            TAG=$(gh release view --json tagName --template '{{.tagName}}')
+            echo "Manual trigger detected. Finding latest release tag..."
+            TAG=$(gh release list --limit 1 | awk -F '\t' '{print $3}')
           fi
-          gh release download "$TAG" --pattern "*.apk" --pattern "*.exe"
+          
+          echo "Targeting release: $TAG"
 
-      # 3. Scan the downloaded files
+          # 2. Download the files
+          # Using --clobber ensures it doesn't fail if files exist
+          gh release download "$TAG" --pattern "*.apk" --pattern "*.exe" --clobber
+
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
         with:
