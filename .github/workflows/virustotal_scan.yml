@@ -3,21 +3,23 @@ name: VirusTotal Scan
 on:
   release:
     types: [published, edited, prereleased]
-  workflow_dispatch: # Allows manual run from the Actions tab
+  workflow_dispatch: 
 
 jobs:
   scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to update the release description
+      contents: write # Needed to edit the release description
     steps:
       - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v4
+        uses: cssnr/virustotal-action@v1
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }} # Allows the action to find release assets
-          update_release_body: true
-          request_rate: 4 # Critical for Free VT accounts (prevents "Rate Limit" errors)
-          files: |
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # This action automatically finds release assets if triggered by a release
+          # We specify the patterns to scan only your apps
+          file_globs: |
             *.apk
             *.exe
+          rate_limit: 4 # Important for Free VT accounts
+          update_release: true
