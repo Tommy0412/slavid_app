@@ -24,10 +24,6 @@ jobs:
           fi
           # Download everything
           gh release download "$TAG" --pattern "*.apk" --pattern "*.exe" --clobber
-          
-          # CRITICAL FIX for 409 Error: 
-          # Remove the 158MB file. Large files often trigger 409 conflicts 
-          # because they take too long to hash/upload on free accounts.
           rm -f app-universal-debug.apk
 
       - name: VirusTotal Scan
@@ -36,7 +32,6 @@ jobs:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           update_release_body: true
-          # Increase request_rate to 60 (seconds) to be very safe with the Free API
           request_rate: 60 
           files: |
             app-arm64-v8a-debug.apk
