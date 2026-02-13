@@ -34,7 +34,7 @@ jobs:
           update_release_body: true
           request_rate: 60 
           files: |
-            app-arm64-v8a-debug.apk
-            app-armeabi-v7a-debug.apk
-            app-x86_64-debug.apk
+            android-arm64-v8a-debug.apk
+            android-armeabi-v7a-debug.apk
+            android-x86_64-debug.apk
             SlaVid.Windows.Setup.*.exe
